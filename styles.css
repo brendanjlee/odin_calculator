@@ -29,10 +29,11 @@ body {
     height: 100px;
     outline: 2px solid black;
     border-radius: 5px;
+    font-family: 'Calculator', sans-serif;
 }
 
 .screen-current {
-    margin-top: 50px;
+    margin-top: 50px; /* delete later for history */
     font-size: 3rem;
     text-align: right;
 }
