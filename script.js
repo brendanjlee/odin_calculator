@@ -72,8 +72,8 @@ function CalculatorController() {
 
 //CalculatorController();
 
-while (true) {
-    let op = prompt('Enter Value');
-    op = op.trim();
-    CalculatorController.runner(op);
-}
+// while (true) {
+//     let op = prompt('Enter Value');
+//     op = op.trim();
+//     CalculatorController.runner(op);
+// }
