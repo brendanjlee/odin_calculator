@@ -16,6 +16,53 @@ function CalculatorController() {
 
     const clearStack = () => stack.length = 0;
 
+    // returns value added if success
+    // returns -1 if not 
+    const addDigit = (input) => {
+        // push if stack empty
+        if (stack.length == 0) {
+            stack.push(input);
+            return input;
+        }
+        
+        // push if top is op
+        let top = stack[stack.length - 1];
+        if (operators.includes(top)) {
+            stack.push(input);
+            return input;
+        }
+
+        // return -1 if stack already has a number
+        return -1;
+    }
+
+    const addOperator = (input) => {
+        // don't add if stack is empty
+        if (stack.length == 0) return -1;
+
+        // don't add if stack contains operator
+        if (isNaN(stack[stack.length - 1])) return -1;
+
+        stack.push(input);
+
+        return input;
+    }
+
+    const solve = () => {
+        // not enough values in stack
+        if (stack.length < 3) return null;
+        
+        // top must be a number
+        if (isNaN(stack[stack.length - 1])) return null;
+
+        let a = stack.pop();
+        let operator = stack.pop();
+        let b = stack.pop();
+        let res = calculate(a, b, operator);
+        stack.push(res);
+        return res;
+    }
+
     const runner = (input) => {
         let op = input;
         console.log(stack);
@@ -67,7 +114,10 @@ function CalculatorController() {
     return {
         runner,
         getStack,
-        clearStack
+        clearStack,
+        addDigit,
+        addOperator,
+        solve
     }
 }
 
@@ -101,6 +151,12 @@ function ScreenController() {
         
         // check for overflow
         if (screenVal === overflow) screenVal = 0;
+
+        // if operator, just add
+        if (isNaN(Number(screenVal))) {
+            updateScreen(btnVal);
+            return;
+        }
         
         screenVal = Number(screenVal);
         let newVal = (screenVal * 10) + btnVal;
@@ -108,20 +164,37 @@ function ScreenController() {
         // displayer overflow for big values
         if (newVal >= maxValue) newVal = overflow;
 
+        // add the number
         updateScreen(newVal);
     };
+
+    const decimalBtnHandler = () => {
+        let screenVal = screenContentDiv.textContent;
+
+        // check for number
+        if (isNaN(Number(screenVal))) return;
+
+        // check for decimals already present
+        if (screenVal.includes('.')) return;
+
+        // TODO: add logic for decimal
+    }
 
     const operatorBtnHanlder = (btn) => {
         let btnVal = btn.textContent;
         let screenVal = screenContentDiv.textContent;
         // if number exist, add to stack. Else skip
         if (screenVal === overflow) return;
+        if (isNaN(Number(screenVal))) return;
         if (typeof Number(screenVal) === 'number') {
-            screenVal = Number(screenVal);
 
-            // skip if previous value is 0 and operator is division
-            //if (screenVal == 0 && btnVal === '/') return;
+            screenVal = Number(screenVal);
+            // TODO: handle div by 0
             
+            // add current number to stack
+            calculator.addDigit(screenVal);
+            console.log(calculator.addOperator(btnVal));
+            console.log(calculator.getStack());
             updateScreen(btnVal);   
         }
     }
@@ -149,6 +222,18 @@ function ScreenController() {
         }
     }
 
+    const equalsBtnHanlder = () => {
+        // add current value into stack if number and not NaN
+        let screenVal = Number(screenContentDiv.textContent);
+        if (!isNaN(screenVal) && screenVal != NaN) calculator.addDigit(screenVal);
+
+        let res = calculator.solve();
+        if (res == null) return;
+        updateScreen(res);
+    }
+
+    // TODO: allow for keyboard input
+
     // bind buttons
     btnDigit.forEach((btn) => {
         btn.addEventListener('click', () => numberBtnHandler(btn));
@@ -158,6 +243,35 @@ function ScreenController() {
     })
     btnDelete.addEventListener('click', () => deleteBtnHandler());
     btnClear.addEventListener('click', () => clearBtnHanlder());
+    btnEq.addEventListener('click', () => equalsBtnHanlder());
+    btnDec.addEventListener('click', () => decimalBtnHandler());
+
+    window.addEventListener('keydown', (e) => {
+        const key = document.querySelector(`button[data-key="${e.key}"]`);
+        if (!key) return;
+
+        // delete
+        if (key.id === 'btn-delete') {
+            deleteBtnHandler();
+            return;
+        }
+
+        // clear
+        if (key.id === 'btn-clear') {
+            clearBtnHanlder();
+            return;
+        }
+
+        // equals button
+        if (key.id === 'btn-equ') {
+            equalsBtnHanlder();
+            return;
+        }
+        
+        // operators and digits
+        if (key.classList[1] === 'digit') numberBtnHandler(key);
+        if (key.classList[1] === 'operand') operatorBtnHanlder(key);
+    })
 
     return {updateScreen}
 }
